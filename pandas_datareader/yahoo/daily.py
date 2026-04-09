@@ -163,11 +163,15 @@ class YahooDailyReader(_DailyBaseReader):
         timestamps = result.get("timestamp", [])
 
         if not timestamps:
-            freq = self.interval[1:].upper()
-            if freq == "WK":
-                freq = "W-MON"
-            elif freq == "MO":
-                freq = "MS"
+            # Map the Yahoo interval codes to pandas frequency aliases.
+            # self.interval is always one of "1d", "1wk", or "1mo" at this point
+            # (enforced by __init__).
+            _interval_to_freq = {
+                "1d": "D",
+                "1wk": "W-MON",
+                "1mo": "MS",
+            }
+            freq = _interval_to_freq.get(self.interval, "D")
             dates = date_range(self.start, self.end, freq=freq)
             prices = DataFrame(
                 index=dates,
