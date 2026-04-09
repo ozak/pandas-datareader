@@ -6,8 +6,6 @@ Module contains tools for collecting data from various remote sources
 
 import warnings
 
-from pandas.util._decorators import deprecate_kwarg
-
 from pandas_datareader.av.forex import AVForexReader
 from pandas_datareader.av.quotes import AVQuotesReader
 from pandas_datareader.av.sector import AVSectorPerformanceReader
@@ -275,7 +273,6 @@ def get_iex_book(*args, **kwargs):
     return IEXDeep(*args, **kwargs).read()
 
 
-@deprecate_kwarg("access_key", "api_key")
 def DataReader(
     name,
     data_source=None,
@@ -285,7 +282,22 @@ def DataReader(
     pause=0.1,
     session=None,
     api_key=None,
+    **kwargs,
 ):
+    # Handle the long-deprecated `access_key` argument manually, since
+    # pandas.util._decorators.deprecate_kwarg changed its signature in
+    # pandas 3.0 (now requires a Warning class as the first argument).
+    if "access_key" in kwargs:
+        warnings.warn(
+            "access_key is deprecated, use api_key instead",
+            FutureWarning,
+            stacklevel=2,
+        )
+        api_key = kwargs.pop("access_key")
+    if kwargs:
+        raise TypeError(
+            f"DataReader() got unexpected keyword argument(s): {list(kwargs)}"
+        )
     """
     Imports data from a number of online sources.
 
@@ -403,6 +415,7 @@ def DataReader(
             retry_count=retry_count,
             pause=pause,
             session=session,
+            api_key=api_key,
         ).read()
 
     elif data_source == "iex-last":
@@ -413,6 +426,7 @@ def DataReader(
             retry_count=retry_count,
             pause=pause,
             session=session,
+            api_key=api_key,
         ).read()
 
     elif data_source == "bankofcanada":
@@ -445,6 +459,7 @@ def DataReader(
             retry_count=retry_count,
             pause=pause,
             session=session,
+            api_key=api_key,
         ).read()
 
     elif data_source == "enigma":
@@ -663,6 +678,7 @@ def DataReader(
             retry_count=retry_count,
             pause=pause,
             session=session,
+            api_key=api_key,
         ).read()
 
     elif data_source == "naver":

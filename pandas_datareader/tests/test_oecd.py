@@ -10,7 +10,13 @@ from pandas_datareader._utils import RemoteDataError
 
 
 class TestOECD:
-    @pytest.mark.xfail(reason="Incorrect URL")
+    @pytest.mark.xfail(
+        reason=(
+            "Dataset ID needs to be updated to new OECD API format "
+            "(e.g., 'OECD.SDD.TPS,DSD_TUD@DF_TUD,1.0/all'). "
+            "See https://data-explorer.oecd.org for new identifiers."
+        )
+    )
     def test_get_un_den(self):
         df = web.DataReader(
             "TUD", "oecd", start=datetime(1960, 1, 1), end=datetime(2012, 1, 1)
@@ -187,7 +193,13 @@ class TestOECD:
             expected = pd.Series(values, index=index, name=label)
             tm.assert_series_equal(df[label], expected)
 
-    @pytest.mark.xfail(reason="Changes in API need fixes")
+    @pytest.mark.xfail(
+        reason=(
+            "Dataset ID needs to be updated to new OECD API format "
+            "(e.g., 'OECD.SDD.NAD,DSD_TOURISM@DF_TOURISM,1.0/all'). "
+            "See https://data-explorer.oecd.org for new identifiers."
+        )
+    )
     def test_get_tourism(self):
         df = web.DataReader(
             "TOURISM_INBOUND",

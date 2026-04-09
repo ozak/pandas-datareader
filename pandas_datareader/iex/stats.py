@@ -18,7 +18,14 @@ class DailySummaryReader(IEX):
     """
 
     def __init__(
-        self, symbols=None, start=None, end=None, retry_count=3, pause=0.1, session=None
+        self,
+        symbols=None,
+        start=None,
+        end=None,
+        retry_count=3,
+        pause=0.1,
+        session=None,
+        api_key=None,
     ):
         import warnings
 
@@ -35,6 +42,7 @@ class DailySummaryReader(IEX):
             retry_count=retry_count,
             pause=pause,
             session=session,
+            api_key=api_key,
         )
 
     @property
@@ -70,7 +78,14 @@ class MonthlySummaryReader(IEX):
     """Monthly statistics from IEX"""
 
     def __init__(
-        self, symbols=None, start=None, end=None, retry_count=3, pause=0.1, session=None
+        self,
+        symbols=None,
+        start=None,
+        end=None,
+        retry_count=3,
+        pause=0.1,
+        session=None,
+        api_key=None,
     ):
         self.curr_date = start
         self.date_format = "%Y%m"
@@ -82,6 +97,7 @@ class MonthlySummaryReader(IEX):
             retry_count=retry_count,
             pause=pause,
             session=session,
+            api_key=api_key,
         )
 
     @property
@@ -135,7 +151,14 @@ class RecordsReader(IEX):
     """
 
     def __init__(
-        self, symbols=None, start=None, end=None, retry_count=3, pause=0.1, session=None
+        self,
+        symbols=None,
+        start=None,
+        end=None,
+        retry_count=3,
+        pause=0.1,
+        session=None,
+        api_key=None,
     ):
         super().__init__(
             symbols=symbols,
@@ -144,6 +167,7 @@ class RecordsReader(IEX):
             retry_count=retry_count,
             pause=pause,
             session=session,
+            api_key=api_key,
         )
 
     @property
@@ -176,7 +200,14 @@ class RecentReader(IEX):
     """
 
     def __init__(
-        self, symbols=None, start=None, end=None, retry_count=3, pause=0.1, session=None
+        self,
+        symbols=None,
+        start=None,
+        end=None,
+        retry_count=3,
+        pause=0.1,
+        session=None,
+        api_key=None,
     ):
         super().__init__(
             symbols=symbols,
@@ -185,6 +216,7 @@ class RecentReader(IEX):
             retry_count=retry_count,
             pause=pause,
             session=session,
+            api_key=api_key,
         )
 
     @property

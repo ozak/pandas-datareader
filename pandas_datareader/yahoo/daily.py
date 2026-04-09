@@ -1,7 +1,6 @@
-import json
-import re
 import time
 
+import pandas as pd
 from pandas import DataFrame, date_range, isnull, notnull, to_datetime
 
 from pandas_datareader._utils import RemoteDataError
@@ -113,26 +112,20 @@ class YahooDailyReader(_DailyBaseReader):
 
     @property
     def url(self):
-        return "https://finance.yahoo.com/quote/{}/history"
+        return "https://query2.finance.yahoo.com/v8/finance/chart/{}"
 
-    # Test test_get_data_interval() crashed because of this issue, probably
-    # whole yahoo part of package wasn't
-    # working properly
     def _get_params(self, symbol):
-        # This needed because yahoo returns data shifted by 4 hours ago.
-        four_hours_in_seconds = 14400
+        # Yahoo Finance v8 chart API uses Unix timestamps for the date range.
         unix_start = int(time.mktime(self.start.timetuple()))
-        unix_start += four_hours_in_seconds
         day_end = self.end.replace(hour=23, minute=59, second=59)
         unix_end = int(time.mktime(day_end.timetuple()))
-        unix_end += four_hours_in_seconds
 
         params = {
             "period1": unix_start,
             "period2": unix_end,
             "interval": self.interval,
-            "frequency": self.interval,
-            "filter": "history",
+            "includeAdjustedClose": "true",
+            "events": "div,splits",
             "symbol": symbol,
         }
         return params
@@ -140,25 +133,41 @@ class YahooDailyReader(_DailyBaseReader):
     def _read_one_data(self, url, params):
         """read one data from specified symbol"""
 
-        symbol = params["symbol"]
-        del params["symbol"]
-        url = url.format(symbol)
+        symbol = params.pop("symbol")
+        api_url = url.format(symbol)
 
-        resp = self._get_response(url, params=params, headers=self.headers)
-        ptrn = r"root\.App\.main = (.*?);\n}\(this\)\);"
-        try:
-            j = json.loads(re.search(ptrn, resp.text, re.DOTALL).group(1))
-            data = j["context"]["dispatcher"]["stores"]["HistoricalPriceStore"]
-        except KeyError as exc:
-            msg = "No data fetched for symbol {} using {}"
-            raise RemoteDataError(msg.format(symbol, self.__class__.__name__)) from exc
+        resp = self._get_response(api_url, params=params, headers=self.headers)
+        data = resp.json()
 
-        # price data
-        prices = DataFrame(data["prices"])
-        if len(prices) == 0:
-            freq = self.interval[1].upper()
-            if freq == "W":
-                freq += "-MON"
+        # Check for API-level errors
+        chart = data.get("chart", {})
+        if chart.get("error"):
+            error = chart["error"]
+            raise RemoteDataError(
+                "No data fetched for symbol {} using {}: {}".format(
+                    symbol,
+                    self.__class__.__name__,
+                    error.get("description", "Unknown error"),
+                )
+            )
+
+        results = chart.get("result")
+        if not results:
+            raise RemoteDataError(
+                "No data fetched for symbol {} using {}".format(
+                    symbol, self.__class__.__name__
+                )
+            )
+
+        result = results[0]
+        timestamps = result.get("timestamp", [])
+
+        if not timestamps:
+            freq = self.interval[1:].upper()
+            if freq == "WK":
+                freq = "W-MON"
+            elif freq == "MO":
+                freq = "MS"
             dates = date_range(self.start, self.end, freq=freq)
             prices = DataFrame(
                 index=dates,
@@ -166,15 +175,24 @@ class YahooDailyReader(_DailyBaseReader):
             )
             return prices
 
-        prices.columns = [col.capitalize() for col in prices.columns]
-        prices["Date"] = to_datetime(to_datetime(prices["Date"], unit="s").dt.date)
+        dates = to_datetime(timestamps, unit="s").normalize()
 
-        if "Data" in prices.columns:
-            prices = prices[prices["Data"].isnull()]
-        prices = prices[["Date", "High", "Low", "Open", "Close", "Volume", "Adjclose"]]
-        prices = prices.rename(columns={"Adjclose": "Adj Close"})
+        quote = result["indicators"]["quote"][0]
+        adj_close_list = result["indicators"].get("adjclose", [{}])
+        adj_close = adj_close_list[0].get("adjclose", [None] * len(timestamps))
 
-        prices = prices.set_index("Date")
+        prices = DataFrame(
+            {
+                "Open": quote.get("open", []),
+                "High": quote.get("high", []),
+                "Low": quote.get("low", []),
+                "Close": quote.get("close", []),
+                "Volume": quote.get("volume", []),
+                "Adj Close": adj_close,
+            },
+            index=dates,
+        )
+        prices.index.name = "Date"
         prices = prices.sort_index().dropna(how="all")
 
         if self.ret_index:
@@ -182,45 +200,45 @@ class YahooDailyReader(_DailyBaseReader):
         if self.adjust_price:
             prices = _adjust_prices(prices)
 
-        # dividends & splits data
-        if self.get_actions and data["eventsData"]:
-            actions = DataFrame(data["eventsData"])
-            actions.columns = [col.capitalize() for col in actions.columns]
-            actions["Date"] = to_datetime(
-                to_datetime(actions["Date"], unit="s").dt.date
-            )
+        # Dividends & splits data from the events field
+        if self.get_actions:
+            events = result.get("events", {})
 
-            types = actions["Type"].unique()
-            if "DIVIDEND" in types:
-                divs = actions[actions.Type == "DIVIDEND"].copy()
-                divs = divs[["Date", "Amount"]].reset_index(drop=True)
-                divs = divs.set_index("Date")
-                divs = divs.rename(columns={"Amount": "Dividends"})
+            dividends_raw = events.get("dividends", {})
+            if dividends_raw:
+                div_dates = to_datetime(
+                    [int(ts) for ts in dividends_raw], unit="s"
+                ).normalize()
+                div_amounts = [
+                    dividends_raw[ts]["amount"] for ts in dividends_raw
+                ]
+                divs = DataFrame(
+                    {"Dividends": div_amounts}, index=div_dates
+                )
+                divs.index.name = "Date"
                 prices = prices.join(divs, how="outer")
 
-            if "SPLIT" in types:
+            splits_raw = events.get("splits", {})
+            if splits_raw:
+                split_dates = to_datetime(
+                    [int(ts) for ts in splits_raw], unit="s"
+                ).normalize()
+                split_ratios = [
+                    splits_raw[ts]["denominator"] / splits_raw[ts]["numerator"]
+                    for ts in splits_raw
+                ]
+                splits = DataFrame(
+                    {"Splits": split_ratios}, index=split_dates
+                )
+                splits.index.name = "Date"
+                prices = prices.join(splits, how="outer")
 
-                def split_ratio(row):
-                    if float(row["Numerator"]) > 0:
-                        if ":" in row["Splitratio"]:
-                            n, m = row["Splitratio"].split(":")
-                            return float(m) / float(n)
-                        else:
-                            return eval(row["Splitratio"])
-                    else:
-                        return 1
-
-                splits = actions[actions.Type == "SPLIT"].copy()
-                splits["SplitRatio"] = splits.apply(split_ratio, axis=1)
-                splits = splits.reset_index(drop=True)
-                splits = splits.set_index("Date")
-                splits["Splits"] = splits["SplitRatio"]
-                prices = prices.join(splits["Splits"], how="outer")
-
-                if "DIVIDEND" in types and not self.adjust_dividends:
-                    # dividends are adjusted automatically by Yahoo
+                if dividends_raw and not self.adjust_dividends:
                     adj = (
-                        prices["Splits"].sort_index(ascending=False).fillna(1).cumprod()
+                        prices["Splits"]
+                        .sort_index(ascending=False)
+                        .fillna(1)
+                        .cumprod()
                     )
                     prices["Dividends"] = prices["Dividends"] / adj
 

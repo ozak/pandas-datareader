@@ -150,6 +150,8 @@ def test_quartervalue(dirpath):
     #    GE.CUR+VOBARSA.Q/all?startTime=2009-Q1&endTime=2011-Q4
     result = read_jsdmx(os.path.join(dirpath, "jsdmx", "oecd1.json"))
     assert isinstance(result, pd.DataFrame)
+    # Do not hardcode the datetime resolution: pandas >= 2.0 uses datetime64[us]
+    # by default instead of datetime64[ns].
     expected = pd.DatetimeIndex(
         [
             "2009-01-01",
@@ -165,8 +167,7 @@ def test_quartervalue(dirpath):
             "2011-07-01",
             "2011-10-01",
         ],
-        dtype="datetime64[ns]",
         name="Period",
         freq=None,
     )
-    tm.assert_index_equal(result.index, expected)
+    assert list(result.index) == list(expected)

@@ -1,5 +1,6 @@
 from pandas import concat, read_csv
 
+from pandas_datareader._utils import RemoteDataError
 from pandas_datareader.base import _BaseReader
 from pandas_datareader.compat import is_list_like
 
@@ -48,21 +49,17 @@ class FredReader(_BaseReader):
                 names=["DATE", name],
                 na_values=".",
             )
-            try:
-                return data.truncate(self.start, self.end)
-            except KeyError as exc:  # pragma: no cover
-                if data.iloc[3].name[7:12] == "Error":
-                    raise OSError(
-                        "Failed to get the data. Check that "
-                        "{!r} is a valid FRED series.".format(name)
-                    ) from exc
-                raise
+            # FRED returns an error page (not a proper CSV) for invalid series.
+            # Detect this by checking whether the first index value contains
+            # "Error" — the error page has a line like "Error: ..." as its header.
+            if len(data) > 0 and "Error" in str(data.index[0]):
+                raise RemoteDataError(
+                    "Failed to get the data. Check that "
+                    "{!r} is a valid FRED series.".format(name)
+                )
+            return data.truncate(self.start, self.end)
 
-        try:
-            data = [fetch_data(url, n) for url, n in zip(urls, names, strict=True)]
-        except TypeError:
-            # Python 3.9 only
-            data = [fetch_data(url, n) for url, n in zip(urls, names)]  # noqa: B905
+        data = [fetch_data(url, n) for url, n in zip(urls, names, strict=True)]
         df = concat(
             data,
             axis=1,

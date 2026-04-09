@@ -33,6 +33,7 @@ class Deep(IEX):
         retry_count=3,
         pause=0.1,
         session=None,
+        api_key=None,
     ):
         if isinstance(symbols, str):
             symbols = symbols.lower()
@@ -46,6 +47,7 @@ class Deep(IEX):
             retry_count=retry_count,
             pause=pause,
             session=session,
+            api_key=api_key,
         )
         self.sub = service
 

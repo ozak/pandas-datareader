@@ -13,7 +13,12 @@ from pandas_datareader.data import (
 )
 from pandas_datareader.exceptions import UnstableAPIWarning
 
-pytestmark = pytest.mark.xfail(reason="Changes in API need fixes")
+pytestmark = pytest.mark.xfail(
+    reason=(
+        "IEX v1 API was shut down. Tests require an IEX Cloud API key "
+        "set via the IEX_API_KEY environment variable."
+    )
+)
 
 
 class TestIEX:

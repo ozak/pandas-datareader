@@ -1,27 +1,63 @@
 import json
+import warnings
 from urllib.parse import urlencode
 
 import pandas as pd
 
 from pandas_datareader.base import _BaseReader
 
+# The IEX v1 free API (api.iextrading.com/1.0/) was shut down in June 2019.
+# These readers now point at IEX Cloud (cloud.iexapis.com/stable/) and require
+# an API key.  Register for a free tier key at https://iexcloud.io/.
+#
 # Data provided for free by IEX
 # Data is furnished in compliance with the guidelines promulgated in the IEX
 # API terms of service and manual
 # See https://iextrading.com/api-exhibit-a/ for additional information
 # and conditions of use
 
+_IEX_V1_SHUTDOWN_MSG = (
+    "The IEX v1 free API (api.iextrading.com/1.0/) was shut down. "
+    "These readers now use the IEX Cloud API (cloud.iexapis.com/stable/), "
+    "which requires a free API key from https://iexcloud.io/. "
+    "Pass the key via the api_key parameter or set the IEX_API_KEY "
+    "environment variable."
+)
+
 
 class IEX(_BaseReader):
     """
     Serves as the base class for all IEX API services.
+
+    .. deprecated::
+        The IEX v1 free API was shut down. Use the IEX Cloud API with a
+        free key from https://iexcloud.io/.
     """
 
     _format = "json"
 
     def __init__(
-        self, symbols=None, start=None, end=None, retry_count=3, pause=0.1, session=None
+        self,
+        symbols=None,
+        start=None,
+        end=None,
+        retry_count=3,
+        pause=0.1,
+        session=None,
+        api_key=None,
     ):
+        import os
+
+        if api_key is None:
+            api_key = os.getenv("IEX_API_KEY")
+        self.api_key = api_key
+
+        # Support for sandbox environment (testing purposes)
+        if os.getenv("IEX_SANDBOX") == "enable":
+            self.sandbox = True
+        else:
+            self.sandbox = False
+
         super().__init__(
             symbols=symbols,
             start=start,
@@ -38,13 +74,24 @@ class IEX(_BaseReader):
         raise NotImplementedError("IEX API service not specified.")
 
     @property
+    def _base_url(self):
+        if self.sandbox:
+            return "https://sandbox.iexapis.com/stable"
+        return "https://cloud.iexapis.com/stable"
+
+    @property
     def url(self):
         """API URL"""
-        qstring = urlencode(self._get_params(self.symbols))
-        return f"https://api.iextrading.com/1.0/{self.service}?{qstring}"
+        params = self._get_params(self.symbols)
+        if self.api_key:
+            params["token"] = self.api_key
+        qstring = urlencode(params)
+        return f"{self._base_url}/{self.service}?{qstring}"
 
     def read(self):
         """Read data"""
+        if not self.api_key:
+            raise ValueError(_IEX_V1_SHUTDOWN_MSG)
         df = super().read()
         if isinstance(df, pd.DataFrame):
             df = df.squeeze()

@@ -18,7 +18,14 @@ class SymbolsReader(IEX):
     """
 
     def __init__(
-        self, symbols=None, start=None, end=None, retry_count=3, pause=0.1, session=None
+        self,
+        symbols=None,
+        start=None,
+        end=None,
+        retry_count=3,
+        pause=0.1,
+        session=None,
+        api_key=None,
     ):
         super().__init__(
             symbols=symbols,
@@ -27,6 +34,7 @@ class SymbolsReader(IEX):
             retry_count=retry_count,
             pause=pause,
             session=session,
+            api_key=api_key,
         )
 
     @property
