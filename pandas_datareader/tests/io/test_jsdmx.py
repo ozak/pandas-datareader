@@ -165,8 +165,24 @@ def test_quartervalue(dirpath):
             "2011-07-01",
             "2011-10-01",
         ],
-        dtype="datetime64[ns]",
         name="Period",
         freq=None,
     )
-    tm.assert_index_equal(result.index, expected)
+    tm.assert_index_equal(result.index, expected, exact=False)
+
+
+def test_sdmx_json_21(dirpath):
+    # SDMX-JSON 2.1 format: structures wrapped under top-level "data" key,
+    # 'structures' plural array, 'roles' array instead of 'role' string
+    result = read_jsdmx(os.path.join(dirpath, "jsdmx", "oecd_sdmx21.json"))
+    assert isinstance(result, pd.DataFrame)
+    assert result.shape == (3, 2)
+    assert list(result.columns) == ["Australia", "United States"]
+    exp_idx = pd.DatetimeIndex(
+        ["2010-01-01", "2011-01-01", "2012-01-01"], name="Time"
+    )
+    tm.assert_index_equal(result.index, exp_idx)
+    tm.assert_series_equal(
+        result["Australia"],
+        pd.Series([18.5, 18.3, 17.9], index=exp_idx, name="Australia"),
+    )

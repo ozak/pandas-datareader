@@ -8,7 +8,7 @@ class BankOfCanadaReader(_BaseReader):
     -----
     See `Bank of Canada <https://www.bankofcanada.ca/rates/>`__"""
 
-    _URL = "http://www.bankofcanada.ca/valet/observations"
+    _URL = "https://www.bankofcanada.ca/valet/observations"
 
     @property
     def url(self):

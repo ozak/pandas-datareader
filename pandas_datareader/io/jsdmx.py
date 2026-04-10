@@ -40,7 +40,17 @@ def read_jsdmx(path_or_buf):
     else:
         data = json.loads(jdata, object_pairs_hook=OrderedDict)
 
-    structure = data["structure"]
+    # Handle SDMX-JSON 2.0/2.1 format where structure and dataSets are
+    # wrapped inside a top-level "data" key.
+    if "data" in data and "structure" not in data and "structures" not in data:
+        data = data["data"]
+
+    # Handle SDMX-JSON 2.1: 'structures' is a plural array; fall back to
+    # SDMX-JSON 1.0 'structure' (singular object) for backward compatibility.
+    if "structures" in data:
+        structure = data["structures"][0]
+    else:
+        structure = data["structure"]
     index = _parse_dimensions(structure["dimensions"]["observation"])
     columns = _parse_dimensions(structure["dimensions"]["series"])
 
@@ -102,6 +112,11 @@ def _parse_dimensions(dimensions):
         values = [v["name"] for v in key["values"]]
 
         role = key.get("role", None)
+        # SDMX-JSON 2.1 uses 'roles' (array) instead of 'role' (string)
+        if role is None:
+            roles = key.get("roles", []) or []
+            if isinstance(roles, list) and roles:
+                role = roles[0]
         if role in ("time", "TIME_PERIOD"):
             values = [_fix_quarter_values(v) for v in values]
             values = pd.DatetimeIndex(values)

@@ -10,7 +10,6 @@ from pandas_datareader._utils import RemoteDataError
 
 
 class TestOECD:
-    @pytest.mark.xfail(reason="Incorrect URL")
     def test_get_un_den(self):
         df = web.DataReader(
             "TUD", "oecd", start=datetime(1960, 1, 1), end=datetime(2012, 1, 1)

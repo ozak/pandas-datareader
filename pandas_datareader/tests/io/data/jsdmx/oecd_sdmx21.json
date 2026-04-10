@@ -1,0 +1,121 @@
+{
+  "$schema": "https://json.sdmx.org/2.1/sdmx-json-data-schema.json",
+  "meta": {
+    "id": "test-tud",
+    "prepared": "2024-01-01T00:00:00Z",
+    "test": true,
+    "sender": {
+      "id": "OECD"
+    },
+    "contentLanguages": [
+      "en"
+    ]
+  },
+  "data": {
+    "structures": [
+      {
+        "name": "Trade Union Density",
+        "links": [
+          {
+            "href": "https://sdmx.oecd.org/public/rest/dataflow/OECD/DF_TUD",
+            "rel": "dataflow"
+          }
+        ],
+        "dimensions": {
+          "dataSet": [],
+          "series": [
+            {
+              "id": "REF_AREA",
+              "name": "Country",
+              "keyPosition": 0,
+              "roles": [
+                "REF_AREA"
+              ],
+              "values": [
+                {
+                  "id": "AUS",
+                  "name": "Australia"
+                },
+                {
+                  "id": "USA",
+                  "name": "United States"
+                }
+              ]
+            }
+          ],
+          "observation": [
+            {
+              "id": "TIME_PERIOD",
+              "name": "Time",
+              "keyPosition": 1,
+              "roles": [
+                "TIME_PERIOD"
+              ],
+              "values": [
+                {
+                  "id": "2010",
+                  "name": "2010"
+                },
+                {
+                  "id": "2011",
+                  "name": "2011"
+                },
+                {
+                  "id": "2012",
+                  "name": "2012"
+                }
+              ]
+            }
+          ]
+        },
+        "attributes": {
+          "dataSet": [],
+          "series": [],
+          "observation": []
+        }
+      }
+    ],
+    "dataSets": [
+      {
+        "structure": 0,
+        "action": "Information",
+        "series": {
+          "0": {
+            "attributes": [],
+            "observations": {
+              "0": [
+                18.5,
+                null
+              ],
+              "1": [
+                18.3,
+                null
+              ],
+              "2": [
+                17.9,
+                null
+              ]
+            }
+          },
+          "1": {
+            "attributes": [],
+            "observations": {
+              "0": [
+                11.4,
+                null
+              ],
+              "1": [
+                11.3,
+                null
+              ],
+              "2": [
+                10.8,
+                null
+              ]
+            }
+          }
+        }
+      }
+    ]
+  }
+}

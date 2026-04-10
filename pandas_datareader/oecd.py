@@ -9,16 +9,26 @@ class OECDReader(_BaseReader):
 
     _format = "json"
 
+    _URL = "https://sdmx.oecd.org/public/rest/data"
+
     @property
     def url(self):
         """API URL"""
-        url = "https://stats.oecd.org/SDMX-JSON/data"
-
         if not isinstance(self.symbols, str):
             raise ValueError("data name must be string")
 
-        # API: https://data.oecd.org/api/sdmx-json-documentation/
-        return f"{url}/{self.symbols}/all/all"
+        # OECD SDMX 2.1 REST API:
+        # https://sdmx.oecd.org/public/rest/data/{agencyID},{dataflowID},{version}/{key}
+        return f"{self._URL}/OECD,{self.symbols},+/all"
+
+    @property
+    def params(self):
+        """Parameters to use in API calls"""
+        return {
+            "format": "jsondata",
+            "startPeriod": str(self.start.year),
+            "endPeriod": str(self.end.year),
+        }
 
     def _read_lines(self, out):
         """read one data from specified URL"""

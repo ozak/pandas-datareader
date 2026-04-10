@@ -5,8 +5,6 @@ import pytest
 
 from pandas_datareader import data as web
 
-pytestmark = pytest.mark.xfail(reason="Changes in API need fixes")
-
 
 class TestEurostat:
     def test_get_ert_h_eur_a(self):

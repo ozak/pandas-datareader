@@ -45,7 +45,9 @@ class TestFamaFrench:
             end="2010-12-01",
         )
         assert isinstance(results, dict)
-        assert len(results) == 3
+        # Kenneth French occasionally adds new data sections to the file;
+        # assert at least the two numeric tables and DESCR are present.
+        assert len(results) >= 3
 
         exp = pd.DataFrame(
             {

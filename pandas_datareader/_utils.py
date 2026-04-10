@@ -30,19 +30,19 @@ def _sanitize_dates(start, end):
     if is_number(start):
         # regard int as year
         start = dt.datetime(start, 1, 1)
-    start = to_datetime(start)
-
-    if is_number(end):
-        end = dt.datetime(end, 1, 1)
-    end = to_datetime(end)
 
     if start is None:
         # default to 5 years before today
         today = dt.date.today()
         start = today - dt.timedelta(days=365 * 5)
+
+    if is_number(end):
+        end = dt.datetime(end, 1, 1)
+
     if end is None:
         # default to today
         end = dt.date.today()
+
     try:
         start = to_datetime(start)
         end = to_datetime(end)
