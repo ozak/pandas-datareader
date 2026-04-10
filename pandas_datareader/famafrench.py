@@ -102,9 +102,13 @@ class FamaFrenchReader(_BaseReader):
         doc_chunks, tables = [], []
         data = self._read_zipfile(url)
 
-        for chunk in data.split(2 * "\r\n"):
+        # Normalize line endings so the splitting logic works regardless of
+        # whether the ZIP contains Windows (\r\n) or Unix (\n) line endings.
+        data = data.replace("\r\n", "\n").replace("\r", "\n")
+
+        for chunk in data.split(2 * "\n"):
             if len(chunk) < 800:
-                doc_chunks.append(chunk.replace("\r\n", " ").strip())
+                doc_chunks.append(chunk.replace("\n", " ").strip())
             else:
                 tables.append(chunk)
 
@@ -125,7 +129,7 @@ class FamaFrenchReader(_BaseReader):
             df = df.truncate(self.start, self.end)
             datasets[i] = df
 
-            title = src[:start].replace("\r\n", " ").strip()
+            title = src[:start].replace("\n", " ").strip()
             shape = "({} rows x {} cols)".format(*df.shape)
             table_desc.append(f"{title} {shape}".strip())
 

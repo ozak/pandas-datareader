@@ -1,4 +1,9 @@
+from pandas_datareader._utils import RemoteDataError
 from pandas_datareader.base import _DailyBaseReader
+
+_STOOQ_USER_AGENT = (
+    "Mozilla/5.0 (X11; Linux x86_64; rv:120.0) Gecko/20100101 Firefox/120.0"
+)
 
 
 class StooqDailyReader(_DailyBaseReader):
@@ -31,6 +36,24 @@ class StooqDailyReader(_DailyBaseReader):
     -----
     See `Stooq <https://stooq.com>`__
     """
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.headers = {"User-Agent": _STOOQ_USER_AGENT}
+
+    @staticmethod
+    def _sanitize_response(response):
+        content = response.content
+        # Stooq may return an HTML page (CAPTCHA / rate-limit) instead of CSV.
+        # Detect it early so users get a clear RemoteDataError instead of a
+        # confusing pandas.errors.ParserError.
+        stripped = content.lstrip().lstrip(b"\xef\xbb\xbf")  # strip BOM
+        if stripped[:9].startswith(b"<!"):
+            raise RemoteDataError(
+                "Stooq returned an HTML page instead of CSV data. "
+                "The service may be rate-limiting or blocking automated requests."
+            )
+        return content
 
     @property
     def url(self):
