@@ -5,7 +5,13 @@ branch = True
 include = */pandas_datareader/*
 omit =
     */_version.py
-    */yahoo/*
+    */yahoo/__init__.py
+    */yahoo/actions.py
+    */yahoo/components.py
+    */yahoo/daily.py
+    */yahoo/headers.py
+    */yahoo/options.py
+    */yahoo/quotes.py
 
 
 [report]
@@ -21,5 +27,11 @@ exclude_lines =
 include = */pandas_datareader/*
 omit =
     */_version.py
-    */yahoo/*
+    */yahoo/__init__.py
+    */yahoo/actions.py
+    */yahoo/components.py
+    */yahoo/daily.py
+    */yahoo/headers.py
+    */yahoo/options.py
+    */yahoo/quotes.py
 ignore_errors = True
