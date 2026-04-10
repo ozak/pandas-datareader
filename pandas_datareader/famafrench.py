@@ -8,7 +8,7 @@ from pandas import read_csv, to_datetime
 from pandas_datareader.base import _BaseReader
 from pandas_datareader.compat import PYTHON_LT_3_10, StringIO
 
-_URL = "http://mba.tuck.dartmouth.edu/pages/faculty/ken.french/"
+_URL = "https://mba.tuck.dartmouth.edu/pages/faculty/ken.french/"
 _URL_PREFIX = "ftp/"
 _URL_SUFFIX = "_CSV.zip"
 

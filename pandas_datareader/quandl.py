@@ -43,7 +43,7 @@ class QuandlReader(_DailyBaseReader):
         QUANDL_API_KEY is read. The API key is *required*.
     """
 
-    _BASE_URL = "https://www.quandl.com/api/v3/datasets/"
+    _BASE_URL = "https://data.nasdaq.com/api/v3/datasets/"
 
     def __init__(
         self,

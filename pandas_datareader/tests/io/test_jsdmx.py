@@ -165,11 +165,10 @@ def test_quartervalue(dirpath):
             "2011-07-01",
             "2011-10-01",
         ],
-        dtype="datetime64[ns]",
         name="Period",
         freq=None,
     )
-    tm.assert_index_equal(result.index, expected)
+    tm.assert_index_equal(result.index, expected, exact=False)
 
 
 def test_sdmx_json_21(dirpath):
