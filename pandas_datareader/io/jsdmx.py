@@ -40,6 +40,11 @@ def read_jsdmx(path_or_buf):
     else:
         data = json.loads(jdata, object_pairs_hook=OrderedDict)
 
+    # Handle SDMX-JSON 2.0 format where structure and dataSets are
+    # wrapped inside a top-level "data" key.
+    if "data" in data and "structure" not in data:
+        data = data["data"]
+
     structure = data["structure"]
     index = _parse_dimensions(structure["dimensions"]["observation"])
     columns = _parse_dimensions(structure["dimensions"]["series"])
