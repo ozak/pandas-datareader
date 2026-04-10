@@ -7,7 +7,7 @@ from pandas_datareader.io.sdmx import _read_sdmx_dsd, read_sdmx
 class EurostatReader(_BaseReader):
     """Get data for the given name from Eurostat."""
 
-    _URL = "http://ec.europa.eu/eurostat/SDMX/diss-web/rest"
+    _URL = "https://ec.europa.eu/eurostat/api/dissemination/sdmx/2.1"
 
     @property
     def url(self):
@@ -15,7 +15,7 @@ class EurostatReader(_BaseReader):
         if not isinstance(self.symbols, str):
             raise ValueError("data name must be string")
 
-        q = "{0}/data/{1}/?startperiod={2}&endperiod={3}"
+        q = "{0}/data/{1}?startPeriod={2}&endPeriod={3}"
         return q.format(self._URL, self.symbols, self.start.year, self.end.year)
 
     @property
@@ -24,7 +24,7 @@ class EurostatReader(_BaseReader):
         if not isinstance(self.symbols, str):
             raise ValueError("data name must be string")
 
-        return f"{self._URL}/datastructure/ESTAT/DSD_{self.symbols}"
+        return f"{self._URL}/datastructure/ESTAT/DSD_{self.symbols}/latest"
 
     def _read_one_data(self, url, params):
         resp_dsd = self._get_response(self.dsd_url)
