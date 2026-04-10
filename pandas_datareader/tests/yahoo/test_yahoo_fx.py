@@ -80,7 +80,7 @@ class TestYahooFX:
         assert isinstance(df.index, MultiIndex)
 
     def test_invalid_symbol_raises(self):
-        with pytest.raises(Exception):  # noqa: B017
+        with pytest.raises(RemoteDataError):
             YahooFXReader("INVALID_PAIR_XYZ", start=START, end=END).read()
 
     def test_all_symbols_invalid_raises_remote_data_error(self):
