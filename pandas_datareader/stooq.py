@@ -48,7 +48,7 @@ class StooqDailyReader(_DailyBaseReader):
         # Detect it early so users get a clear RemoteDataError instead of a
         # confusing pandas.errors.ParserError.
         stripped = content.lstrip().lstrip(b"\xef\xbb\xbf")  # strip BOM
-        if stripped[:9].startswith(b"<!"):
+        if stripped.startswith(b"<!"):
             raise RemoteDataError(
                 "Stooq returned an HTML page instead of CSV data. "
                 "The service may be rate-limiting or blocking automated requests."
